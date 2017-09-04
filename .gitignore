@@ -6,6 +6,15 @@ __pycache__/
 # C extensions
 *.so
 
+#Data files
+data/
+
+#IDEA files
+.idea*
+
+#Openface Dependency
+openface/
+
 # Distribution / packaging
 .Python
 env/
@@ -57,6 +66,7 @@ local_settings.py
 # Flask stuff:
 instance/
 .webassets-cache
+migrations/
 
 # Scrapy stuff:
 .scrapy
