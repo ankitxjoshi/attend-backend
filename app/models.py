@@ -2,7 +2,7 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
-from app import db, auth
+from app import db
 from flask import current_app as app
 
 __author__ = 'Ankit Joshi'
@@ -39,3 +39,20 @@ class Admin(db.Model):
 
     def __repr__(self):
         return '<Admin: {}>'.format(self.name)
+
+
+class Student(db.Model):
+    __tablename__ = 'students'
+
+    id = db.Column(db.Integer, primary_key=True)
+    rollno = db.Column(db.Integer, index=True)
+    name = db.Column(db.String(32), index=True)
+    email = db.Column(db.String(128))
+    year = db.Column(db.Integer)
+    phoneno = db.Column(db.Integer)
+    section = db.Column(db.Integer)
+    branch = db.Column(db.Integer)
+    base64_image = db.Column(db.String(172))
+
+    def __repr__(self):
+        return '<Student: {}>'.format(self.name)

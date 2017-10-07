@@ -22,11 +22,13 @@ string = {
     'SUCCESS': 'SUCCESS',
     'USER_EXISTS': 'This user already exists',
     'MISSING_ARGS': 'Username or Password is empty',
-    'USER_DOESNT_EXISTS': 'User with the given id doesn\'t exists'
+    'USER_DOESNT_EXISTS': 'User with the given id doesn\'t exists',
+    'SERVER_ERROR': 'There was some server error'
 }
 
 # HTTP_STATUS_CODES
 status = {
     'OK': 200,
-    'BAD_REQUEST': 400
+    'BAD_REQUEST': 400,
+    'INTERNAL_SERVER_ERROR': 500
 }
