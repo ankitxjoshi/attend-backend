@@ -45,14 +45,14 @@ class Student(db.Model):
     __tablename__ = 'students'
 
     id = db.Column(db.Integer, primary_key=True)
-    rollno = db.Column(db.Integer, index=True)
+    rollno = db.Column(db.String(7), index=True)
     name = db.Column(db.String(32), index=True)
     email = db.Column(db.String(128))
     year = db.Column(db.Integer)
-    phoneno = db.Column(db.Integer)
+    phoneno = db.Column(db.String(10))
     section = db.Column(db.Integer)
     branch = db.Column(db.Integer)
-    base64_image = db.Column(db.String(172))
+    base64_image = db.Column(db.Text)
 
     def __repr__(self):
         return '<Student: {}>'.format(self.name)

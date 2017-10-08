@@ -1,4 +1,5 @@
 from flask import abort, request, jsonify, g, url_for
+from flask_cors import CORS, cross_origin
 import os
 
 from . import admin
@@ -67,15 +68,14 @@ def get_auth_token():
 
 @admin.route('/store', methods=['POST'])
 def new_student_entry():
-    print request.data
-    name = request.json.get('name')
-    rollno = request.json.get('rollno')
-    email = request.json.get('email')
-    phoneno = request.json.get('phoneno')
-    year = request.json.get('year')
-    branch = request.json.get('branch')
-    section = request.json.get('section')
-    base64_image = request.json.get('base64Image')
+    name = request.get_json()['name']
+    rollno = request.get_json()['rollno']
+    email = request.get_json()['email']
+    phoneno = request.get_json()['phoneno']
+    year = int(request.get_json()['year'])
+    branch = int(request.get_json()['branch'])
+    section = int(request.get_json()['section'])
+    base64_image = request.get_json()['base64Image']
 
     student_data = [name, rollno, email, phoneno, year, branch, section, base64_image]
 
@@ -94,15 +94,16 @@ def new_student_entry():
             message=const.string['USER_EXISTS']
         )
 
-    student = Student(name=name)
-    student.email(email)
-    student.rollno(rollno)
-    student.phoneno(phoneno)
-    student.year(year)
-    student.branch(branch)
-    student.section(section)
-    student.base64_image(base64_image)
-    db.session.add(admin)
+    student = Student(name=name,
+                      email=email,
+                      rollno=rollno,
+                      phoneno=phoneno,
+                      year=year,
+                      branch=branch,
+                      section=section,
+                      base64_image=base64_image)
+
+    db.session.add(student)
     db.session.commit()
 
     new_student_directory = const.openface['RAW_DIR'] + '/' + rollno

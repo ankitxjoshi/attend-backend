@@ -21,7 +21,7 @@ flask = {
 string = {
     'SUCCESS': 'SUCCESS',
     'USER_EXISTS': 'This user already exists',
-    'MISSING_ARGS': 'Username or Password is empty',
+    'MISSING_ARGS': 'All arguments have not been filled',
     'USER_DOESNT_EXISTS': 'User with the given id doesn\'t exists',
     'SERVER_ERROR': 'There was some server error'
 }

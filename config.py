@@ -17,6 +17,7 @@ class DevelopmentConfig(Config):
 
     DEBUG = True
     SQLALCHEMY_ECHO = True
+    CORS_HEADERS = 'Content-Type'
 
 
 class ProductionConfig(Config):
