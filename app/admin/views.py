@@ -1,6 +1,6 @@
 from flask import abort, request, jsonify, g, url_for
-from flask_cors import CORS, cross_origin
 import os
+import json
 
 from . import admin
 from .. import db
@@ -66,6 +66,8 @@ def get_auth_token():
     return jsonify({'token': token.decode('ascii'), 'duration': 600})
 
 
+# TODO: Remove comment after implementing login
+# @auth.login_required
 @admin.route('/store', methods=['POST'])
 def new_student_entry():
     name = request.get_json()['name']
@@ -94,23 +96,12 @@ def new_student_entry():
             message=const.string['USER_EXISTS']
         )
 
-    student = Student(name=name,
-                      email=email,
-                      rollno=rollno,
-                      phoneno=phoneno,
-                      year=year,
-                      branch=branch,
-                      section=section,
-                      base64_image=base64_image)
-
-    db.session.add(student)
-    db.session.commit()
-
+    # Storing profile image
     new_student_directory = const.openface['RAW_DIR'] + '/' + rollno
+    image_path = new_student_directory + '/' + name + '.png'
     try:
         if not os.path.exists(new_student_directory):
             os.makedirs(new_student_directory)
-        image_path = new_student_directory + '/' + name + '.png'
         with open(image_path, "wb") as fh:
             fh.write(base64_image.decode('base64'))
     except:
@@ -119,8 +110,62 @@ def new_student_entry():
             message=const.string['SERVER_ERROR']
         )
 
+    try:
+        student = Student(name=name,
+                          email=email,
+                          rollno=rollno,
+                          phoneno=phoneno,
+                          year=year,
+                          branch=branch,
+                          section=section,
+                          image_url=image_path)
+
+        db.session.add(student)
+        db.session.commit()
+    except:
+        return jsonify(
+            status=const.status['INTERNAL_SERVER_ERROR'],
+            message=const.string['BAD_INPUT']
+        )
+
     return jsonify(
         student=student.rollno,
+        status=const.status['OK'],
+        message=const.string['SUCCESS']
+    )
+
+
+@admin.route('/student/<path:rollno>')
+def get_student(rollno):
+    student = Student.query.filter_by(rollno=rollno).first()
+    if not student:
+        return jsonify(
+            status=const.status['BAD_REQUEST'],
+            message=const.string['USER_DOESNT_EXISTS']
+        )
+
+    return jsonify(
+        name=student.name,
+        email=student.email,
+        rollno=student.rollno,
+        phoneno=student.phoneno,
+        year=student.year,
+        branch=student.branch,
+        section=student.section,
+        image_path=student.image_url,
+        status=const.status['OK'],
+        message=const.string['SUCCESS']
+    )
+
+
+@admin.route('/student')
+def get_students():
+    students = Student.query.all()
+    students_rollno = [student.rollno for student in students]
+    print '-' * 100
+    print students_rollno
+    return jsonify(
+        data=students_rollno,
         status=const.status['OK'],
         message=const.string['SUCCESS']
     )

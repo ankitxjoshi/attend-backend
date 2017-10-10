@@ -12,7 +12,7 @@ __author__ = 'Ankit Joshi'
 
 # TODO: Remove the hardcoded path
 @face_recognition.route('/classify')
-@auth.login_required
+#@auth.login_required
 def classify():
     classifier_parser = classifier.Parser(['/home/ankit/PycharmProjects/attend-backend/openface/images/examples/pankaj-1.jpg'],
                                           const.openface['CLASSIFIER_MODEL'],
@@ -31,7 +31,7 @@ def classify():
 
 
 @face_recognition.route('/train')
-@auth.login_required
+#@auth.login_required
 def train():
     classifier_parser = classifier.Parser(None,
                                           const.openface['CLASSIFIER_MODEL'],

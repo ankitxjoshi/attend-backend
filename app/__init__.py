@@ -2,7 +2,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_httpauth import HTTPBasicAuth
 from flask_migrate import Migrate
-from flask_cors import CORS, cross_origin
 
 
 from config import app_config
@@ -17,7 +16,6 @@ def create_app(config_name):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
-    cors = CORS(app)
     db.init_app(app)
 
     @app.route('/api/health', methods=['GET'])

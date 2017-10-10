@@ -52,7 +52,7 @@ class Student(db.Model):
     phoneno = db.Column(db.String(10))
     section = db.Column(db.Integer)
     branch = db.Column(db.Integer)
-    base64_image = db.Column(db.Text)
+    image_url = db.Column(db.Text)
 
     def __repr__(self):
         return '<Student: {}>'.format(self.name)
