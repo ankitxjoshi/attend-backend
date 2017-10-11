@@ -144,14 +144,12 @@ def get_student(rollno):
             message=const.string['USER_DOESNT_EXISTS']
         )
 
+    data = [student.name, student.rollno, student.email,
+            student.phoneno, student.year, student.branch,
+            student.section]
+
     return jsonify(
-        name=student.name,
-        email=student.email,
-        rollno=student.rollno,
-        phoneno=student.phoneno,
-        year=student.year,
-        branch=student.branch,
-        section=student.section,
+        data=data,
         image_path=student.image_url,
         status=const.status['OK'],
         message=const.string['SUCCESS']
