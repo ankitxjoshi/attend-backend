@@ -28,7 +28,7 @@ def get_classes_of_day(rollno):
 
     now = datetime.datetime.now()
     day = now.strftime("%A")
-    day = "Sunday"
+    
     time_table_details =  (db.session.query(\
                             TimeTable.subject.label("subject"),\
                             TimeTable.location.label("classroom"),\
