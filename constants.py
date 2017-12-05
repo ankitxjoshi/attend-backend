@@ -24,7 +24,8 @@ string = {
     'MISSING_ARGS': 'All arguments have not been filled',
     'USER_DOESNT_EXISTS': 'User with the given id doesn\'t exists',
     'SERVER_ERROR': 'There was some server error',
-    'BAD_INPUT': 'Input is invalid'
+    'BAD_INPUT': 'Input is invalid',
+    'NO_CLASS' : 'No classes for today'
 }
 
 # HTTP_STATUS_CODES

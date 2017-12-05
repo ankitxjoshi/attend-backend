@@ -28,10 +28,7 @@ def get_classes_of_day(rollno):
 
     now = datetime.datetime.now()
     day = now.strftime("%A")
-    # comment out the beow line
-    day = 'Monday'
-
-
+    day = "Sunday"
     time_table_details =  (db.session.query(\
                             TimeTable.subject.label("subject"),\
                             TimeTable.location.label("classroom"),\
@@ -49,7 +46,11 @@ def get_classes_of_day(rollno):
     timetable = [dict((name, getattr(x, name)) for name in ['subject', 'classroom','faculty_name',\
                 'begin_time','end_time','bluetooth_address']) for x in time_table_details]
 
-    print "time table ---------",timetable[1]
+
+    if not timetable :
+        return jsonify(
+                status=const.status['OK'],
+                message=const.string['NO_CLASS'])
 
 
     result = {}
@@ -166,9 +167,9 @@ def get_cummulative_attendance_summary(rollno):
 
     for x,y in  zip(total_present,total_attendance):
         temp={}
-        temp[x[1]]={ }
-        temp[x[1]]["total_attendance"] = x[0]
-        temp[x[1]]["total_present"] = y[0]
+        temp["subject"] = x[1]
+        temp["total_attendance"] = x[0]
+        temp["total_present"] = y[0]
         cummulative_attendance_summary.append(temp)
 
     result = {}
