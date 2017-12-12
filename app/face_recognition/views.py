@@ -1,37 +1,52 @@
 import subprocess
-from flask import jsonify
+import uuid
+import os
 
-from . import face_recognition
+from flask import jsonify, request
+
+import constants as const
 import openface.demos.classifier_api as classifier
 import openface.util.align_dlib_api as align
-import constants as const
-from ..decorators import auth
+from . import face_recognition
 
 __author__ = 'Ankit Joshi'
 
 
-# TODO: Remove the hardcoded path
-@face_recognition.route('/classify')
-#@auth.login_required
+@face_recognition.route('/classify', methods=['GET', 'POST'])
+# @auth.login_required
 def classify():
-    classifier_parser = classifier.Parser(['/home/ankit/PycharmProjects/attend-backend/openface/images/examples/pankaj-1.jpg'],
+    image = request.files.get('image', '')
+    file_path = const.openface['TEMP_DIR'] + '/' + str(uuid.uuid4())
+    image.save(file_path)
+
+    classifier_parser = classifier.Parser([file_path],
                                           const.openface['CLASSIFIER_MODEL'],
                                           const.openface['FEATURE_DIR'],
                                           const.openface['CLASSIFIER'])
 
-    # Analyze the image
-    identity, confidence = classifier_parser.infer()
+    try:
+        # Analyze the image
+        identity, confidence = classifier_parser.infer()
+    except:
+        return jsonify(
+            data=None,
+            status=const.status['INTERNAL_SERVER_ERROR'],
+            message=const.string['BAD_IMAGE_QUALITY']
+        )
+
+    data = dict()
+    data['identity'] = identity
+    data['confidence'] = str(confidence)
 
     return jsonify(
-        identity=identity,
-        confidence=confidence,
+        data=data,
         status=const.status['OK'],
         message=const.string['SUCCESS']
     )
 
 
 @face_recognition.route('/train')
-#@auth.login_required
+# @auth.login_required
 def train():
     classifier_parser = classifier.Parser(None,
                                           const.openface['CLASSIFIER_MODEL'],

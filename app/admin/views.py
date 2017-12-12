@@ -1,12 +1,12 @@
-from flask import abort, request, jsonify, g, url_for
 import os
-import json
 
+from flask import request, jsonify, g, url_for
+
+import constants as const
 from . import admin
 from .. import db
-from ..models import Admin, Student
 from ..decorators import auth
-import constants as const
+from ..models import Admin, Student
 
 __author__ = 'Ankit Joshi'
 
