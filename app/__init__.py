@@ -32,4 +32,8 @@ def create_app(config_name):
     from admin import admin as admin_blueprint
     app.register_blueprint(admin_blueprint, url_prefix='/api/admin')
 
+    # Route for student 
+    from student import student as student_blueprint
+    app.register_blueprint(student_blueprint, url_prefix='/api/student')
+
     return app
