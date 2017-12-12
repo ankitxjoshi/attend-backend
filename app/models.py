@@ -54,6 +54,29 @@ class Student(db.Model):
     section = db.Column(db.String(20))
     branch = db.Column(db.String(20))
     image_url = db.Column(db.Text)
+    password_hash = db.Column(db.String(128))
+
+    def hash_password(self, password):
+        self.password_hash = pwd_context.encrypt(password)
+
+    def verify_password(self, password):
+        return pwd_context.verify(password, self.password_hash)
+
+    def generate_auth_token(self, expiration=600):
+        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
+        return s.dumps({'id': self.id})
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None  # valid token, but expired
+        except BadSignature:
+            return None  # invalid token
+        student = Student.query.get(data['id'])
+        return student
 
     def __repr__(self):
         return '<Student: {}>'.format(self.name)
@@ -62,7 +85,7 @@ class Student(db.Model):
 class Attendance(db.Model):
     __tablename__ = 'attendance'
 
-    def _get_date():
+    def _get_date(self):
         return datetime.datetime.now()
 
     id = db.Column(db.Integer, primary_key=True)

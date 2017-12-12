@@ -1,18 +1,26 @@
 import datetime
 import json
 
-from flask import jsonify
+from flask import jsonify, g
 from sqlalchemy import *
 
 import constants as const
 from . import student
 from .. import db
+from ..decorators import auth
 from ..models import Student, TimeTable, Period, Classroom, Staff, Attendance
 
 __author__ = 'Shivam Sharma'
 
 
 # write the routes below
+@student.route('/token', methods=['GET'])
+@auth.login_required
+def get_auth_token():
+    token = g.student.generate_auth_token(600)
+    return jsonify({'token': token.decode('ascii'), 'duration': 600})
+
+
 @student.route('/classesOfDay/<string:rollno>', methods=['GET'])
 def get_classes_of_day(rollno):
     # get the section and year

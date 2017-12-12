@@ -37,7 +37,7 @@ def new_admin():
 
     return jsonify(
         username=admin.username,
-        location=url_for('get_admin', id=admin.id, _external=True),
+        location=url_for('.get_admin', id=admin.id, _external=True),
         status=const.status['OK'],
         message=const.string['SUCCESS']
     )
@@ -118,7 +118,9 @@ def new_student_entry():
                           year=year,
                           branch=branch,
                           section=section,
+                          password_hash=rollno,
                           image_url=image_path)
+        student.hash_password(rollno)
 
         db.session.add(student)
         db.session.commit()
