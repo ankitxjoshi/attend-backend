@@ -166,3 +166,37 @@ def get_cumulative_attendance_summary(rollno):
     result['message'] = const.string['SUCCESS']
     result['data'] = cumulative_attendance_summary
     return json.dumps(result, indent=4, default=str)
+
+
+@student.route('/mark_attendance/<string:rollno>/<string:subject>/<string:period_id>', methods=['GET'])
+def mark_attendance(rollno, subject, period_id):
+    period = Period.query.filter_by(id=period_id).first()
+    now = datetime.datetime.now()
+
+    start_time = datetime.datetime.strptime(str(period.start_time), "%H:%M:%S")
+    start_time = now.replace(hour=start_time.time().hour,
+                             minute=start_time.time().minute,
+                             second=start_time.time().second,
+                             microsecond=0)
+
+    end_time = datetime.datetime.strptime(str(period.end_time), "%H:%M:%S")
+    end_time = now.replace(hour=end_time.time().hour,
+                           minute=end_time.time().minute,
+                           second=end_time.time().second,
+                           microsecond=0)
+
+    if start_time <= now <= end_time:
+        attendance = Attendance(period_id=period_id,
+                                rollno=rollno,
+                                subject=subject,
+                                presence_flag=True
+                                )
+
+        db.session.add(attendance)
+        db.session.commit()
+
+    result = dict()
+    result['status'] = const.status['OK']
+    result['message'] = const.string['SUCCESS']
+    result['data'] = None
+    return json.dumps(result, indent=4, default=str)
