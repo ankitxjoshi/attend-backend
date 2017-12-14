@@ -8,8 +8,8 @@ import constants as const
 from . import student
 from .. import db
 from ..decorators import auth
-from ..models import Student, TimeTable, Period, Classroom, Staff, Attendance
-
+from ..models import Student, TimeTable, Period, Classroom, Staff, Attendance,TeacherAttendance
+import itertools
 __author__ = 'Shivam Sharma'
 
 
@@ -30,7 +30,7 @@ def get_classes_of_day(rollno):
             status=const.status['BAD_REQUEST'],
             message=const.string['USER_DOESNT_EXISTS']
         )
-    print "Student Details ", student_details.section, student_details.year
+
     section, year = student_details.section, student_details.year
 
     now = datetime.datetime.now()
@@ -39,6 +39,7 @@ def get_classes_of_day(rollno):
     time_table_details = (db.session.query(
         TimeTable.subject.label("subject"),
         TimeTable.location.label("classroom"),
+        TimeTable.period_id.label("period"),
         Staff.name.label("faculty_name"),
         Period.start_time.label("begin_time"),
         Period.end_time.label("end_time"),
@@ -50,7 +51,7 @@ def get_classes_of_day(rollno):
                           ).all()
 
     timetable = [dict((name, getattr(x, name)) for name in ['subject', 'classroom', 'faculty_name',
-                                                            'begin_time', 'end_time', 'bluetooth_address']) for x in
+                                                            'begin_time', 'end_time','period','bluetooth_address']) for x in
                  time_table_details]
 
     if not timetable:
@@ -75,7 +76,7 @@ def get_student_details(rollno):
         )
 
     print "Student details", dir(student)
-    data = dict((name, getattr(student, name)) for name in ['branch', 'email', 'id',
+    data = dict((name, getattr(student, name)) for name in ['branch', 'email',
                                                             'name', 'phoneno', 'rollno', 'section', 'year'])
     print 'data--------------', data
     return jsonify(
@@ -88,45 +89,77 @@ def get_student_details(rollno):
 
 @student.route('/attendance_details_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
 def get_attendance_details_for_subject(rollno, subject):
-    attendance_details = (db.session.query(
-        Attendance.date.label("date"),
-        Attendance.presence_flag.label("presence_flag"),
-        Attendance.period_id.label("period"),
-        Period.start_time.label("begin_time"),
-        Period.end_time.label("end_time"))
-                          .join(Period)
-                          .filter(and_(Attendance.subject == subject, Attendance.rollno == rollno))
-                          ).all()
+    student =  Student.query.filter_by(rollno=rollno).first()
 
-    if not attendance_details:
+    if not student:
+        return jsonify(
+            status=const.status['BAD_REQUEST'],
+            message=const.string['USER_DOESNT_EXISTS']
+        )
+    section =  getattr(student, 'section')
+    year = getattr(student,'year')
+
+    total_present = db.session.query(Attendance.date,Attendance.period_id .label('period'))\
+                              .filter(and_(Attendance.rollno==rollno ,Attendance.subject == subject))\
+                              .all()
+    total_attendance =  db.session.query(TeacherAttendance.date,TeacherAttendance.period_id.label('period'))\
+                                        .filter(and_(TeacherAttendance.year == year ,\
+                                                and_(TeacherAttendance.subject == subject,TeacherAttendance.section == section) ))\
+                                        .all()
+
+    present_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
+                 total_present]
+    attendance_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
+                 total_attendance]
+    absent_details = list(itertools.ifilterfalse(lambda x: x in present_details,attendance_details))
+    present_details = list(itertools.ifilter(lambda x: x in present_details,attendance_details))
+
+    data_list = list()
+    for x in present_details:
+        x['presence_flag']=True
+        data_list.append(x)
+    for x in absent_details:
+        x['presence_flag']=False
+        data_list.append(x)
+    data_list = sorted(data_list, key=lambda k: (k['date'],k['period']))
+
+    result = dict()
+    result['status'] = const.status['OK']
+    result['message'] = const.string['SUCCESS']
+    result['data'] = data_list
+    return json.dumps(result, indent=4, default=str)
+
+
+
+
+@student.route('/attendance_summary_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
+def get_attendance_summary_for_subject(rollno, subject):
+    student =  Student.query.filter_by(rollno=rollno).first()
+
+    if not student:
         return jsonify(
             status=const.status['BAD_REQUEST'],
             message=const.string['USER_DOESNT_EXISTS']
         )
 
-    attendance = [dict((name, getattr(x, name)) for name in ['date', 'period',
-                                                             'presence_flag', 'begin_time', 'end_time']) for x in
-                  attendance_details]
+    section =  getattr(student, 'section')
+    year = getattr(student,'year')
+    total_present = db.session.query(Attendance.date,Attendance.period_id .label('period'))\
+                              .filter(and_(Attendance.rollno==rollno ,Attendance.subject == subject))\
+                              .all()
+    total_attendance =  db.session.query(TeacherAttendance.date,TeacherAttendance.period_id.label('period'))\
+                                        .filter(and_(TeacherAttendance.year == year ,\
+                                                and_(TeacherAttendance.subject == subject,TeacherAttendance.section == section) ))\
+                                        .all()
 
-    print "time table ---------", attendance[1]
+    present_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
+                 total_present]
+    attendance_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
+                 total_attendance]
+    present_details = list(itertools.ifilter(lambda x: x in present_details,attendance_details))
 
-    result = dict()
-    result['status'] = const.status['OK']
-    result['message'] = const.string['SUCCESS']
-    result['data'] = attendance
-    return json.dumps(result, indent=4, default=str)
-
-
-@student.route('/attendance_summary_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
-def get_attendance_summary_for_subject(rollno, subject):
-    total_present = (db.session.query(func.count(Attendance.id))
-                     .filter(and_(Attendance.presence_flag is True,
-                                  Attendance.subject == subject,
-                                  Attendance.rollno == rollno))).first()[0]
-
-    total_attendance = (db.session.query(func.count(Attendance.id))
-                        .filter(and_(Attendance.subject == subject,
-                                     Attendance.rollno == rollno))).first()[0]
+    total_present = len(present_details)
+    total_attendance = len(attendance_details)
 
     data = dict()
     data['total_present'] = total_present
@@ -139,41 +172,77 @@ def get_attendance_summary_for_subject(rollno, subject):
     return json.dumps(result, indent=4, default=str)
 
 
-@student.route('/cumulative_attendance_summary/<string:rollno>', methods=['GET'])
-def get_cumulative_attendance_summary(rollno):
-    total_attendance = db.session.query(func.count(Attendance.id).label('count'), Attendance.subject) \
-        .filter(Attendance.rollno == rollno) \
-        .group_by(Attendance.subject).all()
+@student.route('/cummulative_attendance_summary/<string:rollno>', methods=['GET'])
+def get_cummulative_attendance_summary(rollno):
+    student =  Student.query.filter_by(rollno=rollno).first()
+    if not student:
+        return jsonify(
+            status=const.status['BAD_REQUEST'],
+            message=const.string['USER_DOESNT_EXISTS']
+        )
+    section =  getattr(student, 'section')
+    year = getattr(student,'year')
+    total_attendance =  db.session.query(TeacherAttendance.subject,func.count(TeacherAttendance.id).label('total_attendance'))\
+                                         .filter(and_(TeacherAttendance.section == section,TeacherAttendance.year == year))\
+                                         .group_by(TeacherAttendance.subject)\
+                                         .all()
 
-    total_present = db.session.query(func.count(Attendance.id).label('count'), Attendance.subject) \
-        .filter(and_(Attendance.rollno == rollno,
-                     Attendance.presence_flag is True)) \
-        .group_by(Attendance.subject).all()
+    total_present = db.session.query(Attendance.subject,func.count(Attendance.id).label('total_present'))\
+                              .filter(Attendance.rollno == rollno)\
+                              .group_by(Attendance.subject)\
+                              .all()
 
-    total_subjects = [x.subject for x in total_attendance]
-    actual_subjects = [x.subject for x in total_present]
+    total_subjects = [x[0] for x in total_attendance]
+    actual_subjects = [x[0] for x in total_present]
     missing_subjects = list((set(total_subjects) - set(actual_subjects)))
 
-    [total_present.append((0l, x)) for x in missing_subjects]
+    [total_present.append((x, 0l)) for x in missing_subjects]
 
-    total_present.sort(key=lambda x: x[1])
-    total_attendance.sort(key=lambda x: x[1])
 
-    cumulative_attendance_summary = []
+    total_present.sort(key=lambda x: x[0])
+    total_attendance.sort(key=lambda x: x[0])
+
+    cummulative_attendance_summary = list()
 
     for x, y in zip(total_present, total_attendance):
-        temp = dict()
-        temp["subject"] = x[1]
-        temp["total_attendance"] = x[0]
-        temp["total_present"] = y[0]
-        cumulative_attendance_summary.append(temp)
-
+          temp = dict()
+          temp["subject"] = x[0]
+          temp["total_attendance"] =y[1]
+          temp["total_present"] = x[1]
+          print temp
+          cummulative_attendance_summary.append(temp)
     result = dict()
-
     result['status'] = const.status['OK']
     result['message'] = const.string['SUCCESS']
-    result['data'] = cumulative_attendance_summary
+    result['data'] = cummulative_attendance_summary
     return json.dumps(result, indent=4, default=str)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @student.route('/mark_attendance/<string:rollno>/<string:subject>/<string:period_id>', methods=['GET'])
