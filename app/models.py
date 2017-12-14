@@ -45,8 +45,7 @@ class Admin(db.Model):
 class Student(db.Model):
     __tablename__ = 'students'
 
-    id = db.Column(db.Integer, primary_key=True)
-    rollno = db.Column(db.String(7), index=True)
+    rollno = db.Column(db.String(7), primary_key=True)
     name = db.Column(db.String(32), index=True)
     email = db.Column(db.String(128))
     year = db.Column(db.Integer)
@@ -89,14 +88,14 @@ class Attendance(db.Model):
         return datetime.datetime.now()
 
     id = db.Column(db.Integer, primary_key=True)
-    rollno = db.Column(db.String(7), index=True)
+    rollno = db.Column(db.String(7),db.ForeignKey('students.rollno'))
     subject = db.Column(db.String(50))
     period_id = db.Column(db.Integer, db.ForeignKey('period.id'))
     date = db.Column(db.Date, default=_get_date)
-    presence_flag = db.Column(db.Boolean)
+
 
     def __repr__(self):
-        return '<Attendance: {}>'.format(self.name)
+        return '<Attendance: {}>'.format(self.id)
 
 
 class TimeTable(db.Model):
@@ -109,10 +108,11 @@ class TimeTable(db.Model):
     section = db.Column(db.String(20))
     location = db.Column(db.String(20), db.ForeignKey('classroom.location'))
     year = db.Column(db.Integer)
-    staff_id = db.Column(db.Integer, db.ForeignKey('staff.id'))
+    staff_id =db.Column(db.String(20),db.ForeignKey('staff.id'))
+
 
     def __repr__(self):
-        return '<TimeTable: {}>'.format(self.name)
+        return '<TimeTable: {}>'.format(self.id)
 
 
 class Classroom(db.Model):
@@ -122,7 +122,7 @@ class Classroom(db.Model):
     bluetooth_address = db.Column(db.String(50), unique=True)
 
     def __repr__(self):
-        return '<Classroom: {}>'.format(self.name)
+        return '<Classroom: {}>'.format(self.location)
 
 
 class Period(db.Model):
@@ -139,8 +139,21 @@ class Period(db.Model):
 class Staff(db.Model):
     __tablename__ = 'staff'
 
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(50))
-
+    password = db.Column(db.String(50))
     def __repr__(self):
         return '<Staff: {}>'.format(self.name)
+
+class TeacherAttendance(db.Model):
+     __tablename__ = 'teacherattendance'
+     def _get_date():
+         return datetime.datetime.now()
+
+     id = db.Column(db.Integer, primary_key=True)
+     staff_id =db.Column(db.String(50),db.ForeignKey('staff.id'))
+     subject = db.Column(db.String(50))
+     period_id = db.Column(db.Integer,db.ForeignKey('period.id'))
+     date = db.Column(db.Date,index=True,default=_get_date)
+     section = db.Column(db.String(20))
+     year =  db.Column(db.Integer)
