@@ -29,16 +29,16 @@ def get_classes_of_day(staff_id,day):
 
 
       timetable = [dict((name, getattr(x, name)) for name in ['subject', 'classroom','section',\
-                   'section','year','period','begin_time','end_time']) for x in time_table_details]
-
-
-      if not timetable :
-          return jsonify(
-                  status=const.status['OK'],
-                  message=const.string['NO_CLASS'])
-
+                   'year','period','begin_time','end_time']) for x in time_table_details]
 
       result =dict()
+      if not timetable :
+          result['status'] = const.status['OK']
+          result['message'] = const.string['NO_CLASS']
+          return json.dumps(result,indent=4, default=str)
+
+
+
       result['status'] = const.status['OK']
       result['message'] = const.string['SUCCESS']
       result['data'] = timetable
@@ -80,13 +80,15 @@ def get_attendace(section,subject,year,staff_id):
             temp_dict['rollno']=y
             temp_dict['presence_flag']=True
             temp['details'].append(temp_dict)
-
         absent_rollno_list  = list(itertools.ifilterfalse(lambda x: x in rollno_list,all_rollno_list))
         for y in  absent_rollno_list :
             temp_dict =dict()
             temp_dict['rollno']=y
             temp_dict['presence_flag']=False
             temp['details'].append(temp_dict)
+        # sort the temp details
+        temp['details']  = sorted(temp['details'], key=lambda k: k['rollno'])
+        result_data = sorted(result_data, key=lambda k: (k['date'],k['period']))
         result_data.append(temp)
 
 
@@ -98,12 +100,33 @@ def get_attendace(section,subject,year,staff_id):
     return  json.dumps(result,indent=4, default=str)
 
 
-@teacher.route('/editAttendance/<string:rollno>/<string:subject>/<string:date>/<string:period>/<string:mark_flag>',methods=['PUT'])
-def edit_attendance(rollno,subject,date,period,mark_flag):
+@teacher.route('/editAttendance/<string:staff_id>/<string:rollno>/<string:subject>/<string:date>/<string:period>/<string:mark_flag>',methods=['PUT'])
+def edit_attendance(staff_id,rollno,subject,date,period,mark_flag):
     # date in dd-mm-yy  check for period in time table
     period = int(period)
-    date = datetime.datetime.strptime(date,'%d-%m-%y')
-    if mark_flag == 'present' :
+    date = datetime.datetime.strptime(date[2:],'%y-%m-%d')
+    print date
+    day =  date.strftime("%A")
+    print date,day
+    student = Student.query.filter_by(rollno=rollno).first()
+    section = student.section
+    year = student.year
+    print section,year
+    timetable_entry = db.session.query(TimeTable.id)\
+                                .filter(and_(TimeTable.period_id==period,\
+                                        and_(TimeTable.year==year,\
+                                        and_(TimeTable.subject==subject,\
+                                        and_(TimeTable.section==section,\
+                                        and_(TimeTable.day==day,TimeTable.staff_id==staff_id))))))\
+                                .first()
+
+    if timetable_entry is None:
+        result = dict()
+        result['status'] = const.status['BAD_REQUEST']
+        result['message'] = const.string['BAD_INPUT']
+        return  json.dumps(result,indent=4, default=str)
+
+    if mark_flag == 'Present' :
         attendance_entry = db.session.query(Attendance.rollno)\
                                             .filter(and_(Attendance.date==date,\
                                                      and_(Attendance.period_id==period,\
@@ -129,17 +152,31 @@ def edit_attendance(rollno,subject,date,period,mark_flag):
 
 
 
-@teacher.route('/markSelfAttendance/<string:subject>/<string:staff_id>/<string:section>/<string:year>/<string:period>',methods=['get'])
+@teacher.route('/markSelfAttendance/<string:subject>/<string:staff_id>/<string:section>/<string:year>/<string:period>',methods=['GET'])
 def mark_self_attendance(subject,staff_id,section,year,period):
     now = datetime.datetime.now()
     date = now.strftime("%y-%m-%d")
     year = int(year)
     period = int(period)
+    day = now.strftime("%A")
+    print day
   #check whether the period exsists or not
+    timetable_entry = db.session.query(TimeTable.id)\
+                                .filter(and_(TimeTable.period_id==period,\
+                                        and_(TimeTable.year==year,\
+                                        and_(TimeTable.subject==subject,\
+                                        and_(TimeTable.section==section,\
+                                        and_(TimeTable.day==day,TimeTable.staff_id==staff_id))))))\
+                                .first()
+    if timetable_entry is None:
+        result = dict()
+        result['status'] = const.status['BAD_REQUEST']
+        result['message'] = const.string['BAD_INPUT']
+        return  json.dumps(result,indent=4, default=str)
 
     teacher_attendance_entry = db.session.query(TeacherAttendance.id)\
                                         .filter(and_(TeacherAttendance.date==date,\
-                                                 and_(TeacherAttendance.period_id==period,\
+                                                and_(TeacherAttendance.period_id==period,\
                                                 and_(TeacherAttendance.section==section,\
                                                 and_(TeacherAttendance.year==year,\
                                                 and_(TeacherAttendance.subject==subject,TeacherAttendance.staff_id == staff_id))))))\
@@ -152,4 +189,59 @@ def mark_self_attendance(subject,staff_id,section,year,period):
     result = dict()
     result['status'] = const.status['OK']
     result['message'] = const.string['SUCCESS']
+    return  json.dumps(result,indent=4, default=str)
+
+
+
+@teacher.route('/createUser',methods=['POST'])
+def new_teacher():
+    staff_id = request.json.get('staff_id')
+    name = request.json.get('name')
+    passwod =request.json.get('password')
+    # missing arguments
+    if name is None or passwod is None or staff_id is None:
+        result = dict()
+        result['status'] = const.status['BAD_REQUEST']
+        result['message'] = const.string['MISSING_ARGS']
+        return  json.dumps(result,indent=4, default=str)
+
+    if Staff.query.filter_by(id=staff_id).first() is not None:
+        result = dict()
+        result['status'] = const.status['BAD_REQUEST']
+        result['message'] = const.string['MISSING_ARGS']
+        return  json.dumps(result,indent=4, default=str)
+
+    teacher = Staff(id=staff_id,name=name)
+    teacher.hash_password(passwod)
+    db.session.add(teacher)
+    db.session.commit()
+    result = dict()
+    result['status'] = const.status['OK']
+    result['message'] = const.string['SUCCESS']
+    result['staff_id'] = teacher.id
+    return  json.dumps(result,indent=4, default=str)
+
+@teacher.route('/login',methods=['POST'])
+def login():
+    staff_id = request.json.get('staff_id')
+    passwod =request.json.get('password')
+    # missing arguments
+    if  passwod is None or staff_id is None:
+        result = dict()
+        result['status'] = const.status['BAD_REQUEST']
+        result['message'] = const.string['MISSING_ARGS']
+        return  json.dumps(result,indent=4, default=str)
+    print staff_id ,passwod
+    staff = Staff.query.filter_by(id=staff_id).first()
+    if not staff or not staff.verify_password(passwod):
+        result = dict()
+        result['status'] = const.status['BAD_REQUEST']
+        result['message'] = const.string['USER_DOESNT_EXISTS']
+        return  json.dumps(result,indent=4, default=str)
+
+
+    result = dict()
+    result['status'] = const.status['OK']
+    result['message'] = const.string['SUCCESS']
+    result['staff_id'] = staff.id
     return  json.dumps(result,indent=4, default=str)

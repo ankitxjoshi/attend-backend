@@ -141,7 +141,14 @@ class Staff(db.Model):
 
     id = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(50))
-    password = db.Column(db.String(50))
+    password = db.Column(db.String(128))
+
+    def hash_password(self, passord):
+        self.password = pwd_context.encrypt(passord)
+
+    def verify_password(self, passord):
+        return pwd_context.verify(passord, self.password)
+
     def __repr__(self):
         return '<Staff: {}>'.format(self.name)
 
