@@ -218,33 +218,6 @@ def get_cummulative_attendance_summary(rollno):
     return json.dumps(result, indent=4, default=str)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 @student.route('/mark_attendance/<string:rollno>/<string:subject>/<string:period_id>', methods=['GET'])
 def mark_attendance(rollno, subject, period_id):
     period = Period.query.filter_by(id=period_id).first()

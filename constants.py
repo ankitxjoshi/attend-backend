@@ -20,7 +20,7 @@ flask = {
 
 # STRING_CONSTANTS
 string = {
-    'SUCCESS': 'SUCCESS',
+    'SUCCESS': 'Successfully Done',
     'USER_EXISTS': 'This user already exists',
     'MISSING_ARGS': 'All arguments have not been filled',
     'USER_DOESNT_EXISTS': 'User with the given id doesn\'t exists',
