@@ -8,8 +8,9 @@ import constants as const
 from . import student
 from .. import db
 from ..decorators import auth
-from ..models import Student, TimeTable, Period, Classroom, Staff, Attendance,TeacherAttendance
+from ..models import Student, TimeTable, Period, Classroom, Staff, Attendance, TeacherAttendance
 import itertools
+
 __author__ = 'Shivam Sharma'
 
 
@@ -18,7 +19,16 @@ __author__ = 'Shivam Sharma'
 @auth.login_required
 def get_auth_token():
     token = g.student.generate_auth_token(600)
-    return jsonify({'token': token.decode('ascii'), 'duration': 600})
+
+    data = dict()
+    data['token'] = token
+    data['duration'] = 600
+
+    return jsonify(
+        status=const.status['OK'],
+        data=data,
+        message=const.string['SUCCESS'],
+    )
 
 
 @student.route('/classesOfDay/<string:rollno>', methods=['GET'])
@@ -51,7 +61,8 @@ def get_classes_of_day(rollno):
                           ).all()
 
     timetable = [dict((name, getattr(x, name)) for name in ['subject', 'classroom', 'faculty_name',
-                                                            'begin_time', 'end_time','period','bluetooth_address']) for x in
+                                                            'begin_time', 'end_time', 'period', 'bluetooth_address'])
+                 for x in
                  time_table_details]
 
     if not timetable:
@@ -89,39 +100,39 @@ def get_student_details(rollno):
 
 @student.route('/attendance_details_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
 def get_attendance_details_for_subject(rollno, subject):
-    student =  Student.query.filter_by(rollno=rollno).first()
+    student = Student.query.filter_by(rollno=rollno).first()
 
     if not student:
         return jsonify(
             status=const.status['BAD_REQUEST'],
             message=const.string['USER_DOESNT_EXISTS']
         )
-    section =  getattr(student, 'section')
-    year = getattr(student,'year')
+    section = getattr(student, 'section')
+    year = getattr(student, 'year')
 
-    total_present = db.session.query(Attendance.date,Attendance.period_id .label('period'))\
-                              .filter(and_(Attendance.rollno==rollno ,Attendance.subject == subject))\
-                              .all()
-    total_attendance =  db.session.query(TeacherAttendance.date,TeacherAttendance.period_id.label('period'))\
-                                        .filter(and_(TeacherAttendance.year == year ,\
-                                                and_(TeacherAttendance.subject == subject,TeacherAttendance.section == section) ))\
-                                        .all()
+    total_present = db.session.query(Attendance.date, Attendance.period_id.label('period')) \
+        .filter(and_(Attendance.rollno == rollno, Attendance.subject == subject)) \
+        .all()
+    total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period')) \
+        .filter(and_(TeacherAttendance.year == year, \
+                     and_(TeacherAttendance.subject == subject, TeacherAttendance.section == section))) \
+        .all()
 
-    present_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
-                 total_present]
-    attendance_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
-                 total_attendance]
-    absent_details = list(itertools.ifilterfalse(lambda x: x in present_details,attendance_details))
-    present_details = list(itertools.ifilter(lambda x: x in present_details,attendance_details))
+    present_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
+                       total_present]
+    attendance_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
+                          total_attendance]
+    absent_details = list(itertools.ifilterfalse(lambda x: x in present_details, attendance_details))
+    present_details = list(itertools.ifilter(lambda x: x in present_details, attendance_details))
 
     data_list = list()
     for x in present_details:
-        x['presence_flag']=True
+        x['presence_flag'] = True
         data_list.append(x)
     for x in absent_details:
-        x['presence_flag']=False
+        x['presence_flag'] = False
         data_list.append(x)
-    data_list = sorted(data_list, key=lambda k: (k['date'],k['period']))
+    data_list = sorted(data_list, key=lambda k: (k['date'], k['period']))
 
     result = dict()
     result['status'] = const.status['OK']
@@ -130,11 +141,9 @@ def get_attendance_details_for_subject(rollno, subject):
     return json.dumps(result, indent=4, default=str)
 
 
-
-
 @student.route('/attendance_summary_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
 def get_attendance_summary_for_subject(rollno, subject):
-    student =  Student.query.filter_by(rollno=rollno).first()
+    student = Student.query.filter_by(rollno=rollno).first()
 
     if not student:
         return jsonify(
@@ -142,21 +151,21 @@ def get_attendance_summary_for_subject(rollno, subject):
             message=const.string['USER_DOESNT_EXISTS']
         )
 
-    section =  getattr(student, 'section')
-    year = getattr(student,'year')
-    total_present = db.session.query(Attendance.date,Attendance.period_id .label('period'))\
-                              .filter(and_(Attendance.rollno==rollno ,Attendance.subject == subject))\
-                              .all()
-    total_attendance =  db.session.query(TeacherAttendance.date,TeacherAttendance.period_id.label('period'))\
-                                        .filter(and_(TeacherAttendance.year == year ,\
-                                                and_(TeacherAttendance.subject == subject,TeacherAttendance.section == section) ))\
-                                        .all()
+    section = getattr(student, 'section')
+    year = getattr(student, 'year')
+    total_present = db.session.query(Attendance.date, Attendance.period_id.label('period')) \
+        .filter(and_(Attendance.rollno == rollno, Attendance.subject == subject)) \
+        .all()
+    total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period')) \
+        .filter(and_(TeacherAttendance.year == year, \
+                     and_(TeacherAttendance.subject == subject, TeacherAttendance.section == section))) \
+        .all()
 
-    present_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
-                 total_present]
-    attendance_details = [dict((name, getattr(x, name)) for name in ['date','period']) for x in
-                 total_attendance]
-    present_details = list(itertools.ifilter(lambda x: x in present_details,attendance_details))
+    present_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
+                       total_present]
+    attendance_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
+                          total_attendance]
+    present_details = list(itertools.ifilter(lambda x: x in present_details, attendance_details))
 
     total_present = len(present_details)
     total_attendance = len(attendance_details)
@@ -174,23 +183,24 @@ def get_attendance_summary_for_subject(rollno, subject):
 
 @student.route('/cummulative_attendance_summary/<string:rollno>', methods=['GET'])
 def get_cummulative_attendance_summary(rollno):
-    student =  Student.query.filter_by(rollno=rollno).first()
+    student = Student.query.filter_by(rollno=rollno).first()
     if not student:
         return jsonify(
             status=const.status['BAD_REQUEST'],
             message=const.string['USER_DOESNT_EXISTS']
         )
-    section =  getattr(student, 'section')
-    year = getattr(student,'year')
-    total_attendance =  db.session.query(TeacherAttendance.subject,func.count(TeacherAttendance.id).label('total_attendance'))\
-                                         .filter(and_(TeacherAttendance.section == section,TeacherAttendance.year == year))\
-                                         .group_by(TeacherAttendance.subject)\
-                                         .all()
+    section = getattr(student, 'section')
+    year = getattr(student, 'year')
+    total_attendance = db.session.query(TeacherAttendance.subject,
+                                        func.count(TeacherAttendance.id).label('total_attendance')) \
+        .filter(and_(TeacherAttendance.section == section, TeacherAttendance.year == year)) \
+        .group_by(TeacherAttendance.subject) \
+        .all()
 
-    total_present = db.session.query(Attendance.subject,func.count(Attendance.id).label('total_present'))\
-                              .filter(Attendance.rollno == rollno)\
-                              .group_by(Attendance.subject)\
-                              .all()
+    total_present = db.session.query(Attendance.subject, func.count(Attendance.id).label('total_present')) \
+        .filter(Attendance.rollno == rollno) \
+        .group_by(Attendance.subject) \
+        .all()
 
     total_subjects = [x[0] for x in total_attendance]
     actual_subjects = [x[0] for x in total_present]
@@ -198,19 +208,18 @@ def get_cummulative_attendance_summary(rollno):
 
     [total_present.append((x, 0l)) for x in missing_subjects]
 
-
     total_present.sort(key=lambda x: x[0])
     total_attendance.sort(key=lambda x: x[0])
 
     cummulative_attendance_summary = list()
 
     for x, y in zip(total_present, total_attendance):
-          temp = dict()
-          temp["subject"] = x[0]
-          temp["total_attendance"] =y[1]
-          temp["total_present"] = x[1]
-          print temp
-          cummulative_attendance_summary.append(temp)
+        temp = dict()
+        temp["subject"] = x[0]
+        temp["total_attendance"] = y[1]
+        temp["total_present"] = x[1]
+        print temp
+        cummulative_attendance_summary.append(temp)
     result = dict()
     result['status'] = const.status['OK']
     result['message'] = const.string['SUCCESS']
@@ -238,15 +247,20 @@ def mark_attendance(rollno, subject, period_id):
     if start_time <= now <= end_time:
         attendance = Attendance(period_id=period_id,
                                 rollno=rollno,
-                                subject=subject,
-                                presence_flag=True
+                                subject=subject
                                 )
 
         db.session.add(attendance)
         db.session.commit()
+        data = dict()
+        data['marked'] = 'true'
+
+    else:
+        data = dict()
+        data['marked'] = 'false'
 
     result = dict()
     result['status'] = const.status['OK']
     result['message'] = const.string['SUCCESS']
-    result['data'] = None
+    result['data'] = data
     return json.dumps(result, indent=4, default=str)

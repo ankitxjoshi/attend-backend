@@ -63,7 +63,12 @@ def get_admin(id):
 @auth.login_required
 def get_auth_token():
     token = g.admin.generate_auth_token(600)
-    return jsonify({'token': token.decode('ascii'), 'duration': 600})
+    return jsonify(
+        status=const.status['OK'],
+        token=token.decode('ascii'),
+        message=const.string['SUCCESS'],
+        duration=600
+    )
 
 
 # TODO: Remove comment after implementing login

@@ -19,6 +19,7 @@ def classify():
     file_path = const.openface['TEMP_DIR'] + '/' + str(uuid.uuid4())
     image.save(file_path)
 
+    # file_path = '/home/ankit/PycharmProjects/attend-backend/data/temp/top'
     classifier_parser = classifier.Parser([file_path],
                                           const.openface['CLASSIFIER_MODEL'],
                                           const.openface['FEATURE_DIR'],
@@ -34,6 +35,7 @@ def classify():
             message=const.string['BAD_IMAGE_QUALITY']
         )
 
+    print identity
     data = dict()
     data['identity'] = identity
     data['confidence'] = str(confidence)
