@@ -39,3 +39,11 @@ files = *.sql
 [shell]
 bears = ShellCheckBear
 files = setup.sh 
+
+[CI]
+files = .circleci/*
+bears = SpaceConsistencyBear
+
+[yml]
+bears = YAMLLintBear
+files = .circleci/config.yml
