@@ -19,7 +19,8 @@ def verify_password(username_or_token, password):
             student = Student.verify_auth_token(username_or_token)
             if not student:
                 # try to authenticate with username/password
-                student = Student.query.filter_by(rollno=username_or_token).first()
+                student = Student.query.filter_by(
+                    rollno=username_or_token).first()
                 if not student or not student.verify_password(password):
                     return False
             g.student = student

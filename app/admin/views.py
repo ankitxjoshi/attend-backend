@@ -84,7 +84,8 @@ def new_student_entry():
     section = int(request.get_json()['section'])
     base64_image = request.get_json()['base64Image']
 
-    student_data = [name, rollno, email, phoneno, year, branch, section, base64_image]
+    student_data = [name, rollno, email, phoneno,
+                    year, branch, section, base64_image]
 
     # missing arguments
     for data in student_data:
@@ -107,7 +108,7 @@ def new_student_entry():
     try:
         if not os.path.exists(new_student_directory):
             os.makedirs(new_student_directory)
-        with open(image_path, "wb") as fh:
+        with open(image_path, 'wb') as fh:
             fh.write(base64_image.decode('base64'))
     except:
         return jsonify(

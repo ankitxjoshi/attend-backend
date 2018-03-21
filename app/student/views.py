@@ -44,16 +44,16 @@ def get_classes_of_day(rollno):
     section, year = student_details.section, student_details.year
 
     now = datetime.datetime.now()
-    day = now.strftime("%A")
+    day = now.strftime('%A')
 
     time_table_details = (db.session.query(
-        TimeTable.subject.label("subject"),
-        TimeTable.location.label("classroom"),
-        TimeTable.period_id.label("period"),
-        Staff.name.label("faculty_name"),
-        Period.start_time.label("begin_time"),
-        Period.end_time.label("end_time"),
-        Classroom.bluetooth_address.label("bluetooth_address"))
+        TimeTable.subject.label('subject'),
+        TimeTable.location.label('classroom'),
+        TimeTable.period_id.label('period'),
+        Staff.name.label('faculty_name'),
+        Period.start_time.label('begin_time'),
+        Period.end_time.label('end_time'),
+        Classroom.bluetooth_address.label('bluetooth_address'))
                           .join(Period)
                           .join(Staff)
                           .join(Classroom)
@@ -86,7 +86,7 @@ def get_student_details(rollno):
             message=const.string['USER_DOESNT_EXISTS']
         )
 
-    print "Student details", dir(student)
+    print 'Student details', dir(student)
     data = dict((name, getattr(student, name)) for name in ['branch', 'email',
                                                             'name', 'phoneno', 'rollno', 'section', 'year'])
     print 'data--------------', data
@@ -114,7 +114,7 @@ def get_attendance_details_for_subject(rollno, subject):
         .filter(and_(Attendance.rollno == rollno, Attendance.subject == subject)) \
         .all()
     total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period')) \
-        .filter(and_(TeacherAttendance.year == year, \
+        .filter(and_(TeacherAttendance.year == year,
                      and_(TeacherAttendance.subject == subject, TeacherAttendance.section == section))) \
         .all()
 
@@ -122,8 +122,10 @@ def get_attendance_details_for_subject(rollno, subject):
                        total_present]
     attendance_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
                           total_attendance]
-    absent_details = list(itertools.ifilterfalse(lambda x: x in present_details, attendance_details))
-    present_details = list(itertools.ifilter(lambda x: x in present_details, attendance_details))
+    absent_details = list(itertools.ifilterfalse(
+        lambda x: x in present_details, attendance_details))
+    present_details = list(itertools.ifilter(
+        lambda x: x in present_details, attendance_details))
 
     data_list = list()
     for x in present_details:
@@ -157,7 +159,7 @@ def get_attendance_summary_for_subject(rollno, subject):
         .filter(and_(Attendance.rollno == rollno, Attendance.subject == subject)) \
         .all()
     total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period')) \
-        .filter(and_(TeacherAttendance.year == year, \
+        .filter(and_(TeacherAttendance.year == year,
                      and_(TeacherAttendance.subject == subject, TeacherAttendance.section == section))) \
         .all()
 
@@ -165,7 +167,8 @@ def get_attendance_summary_for_subject(rollno, subject):
                        total_present]
     attendance_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
                           total_attendance]
-    present_details = list(itertools.ifilter(lambda x: x in present_details, attendance_details))
+    present_details = list(itertools.ifilter(
+        lambda x: x in present_details, attendance_details))
 
     total_present = len(present_details)
     total_attendance = len(attendance_details)
@@ -215,9 +218,9 @@ def get_cummulative_attendance_summary(rollno):
 
     for x, y in zip(total_present, total_attendance):
         temp = dict()
-        temp["subject"] = x[0]
-        temp["total_attendance"] = y[1]
-        temp["total_present"] = x[1]
+        temp['subject'] = x[0]
+        temp['total_attendance'] = y[1]
+        temp['total_present'] = x[1]
         print temp
         cummulative_attendance_summary.append(temp)
     result = dict()
@@ -232,13 +235,13 @@ def mark_attendance(rollno, subject, period_id):
     period = Period.query.filter_by(id=period_id).first()
     now = datetime.datetime.now()
 
-    start_time = datetime.datetime.strptime(str(period.start_time), "%H:%M:%S")
+    start_time = datetime.datetime.strptime(str(period.start_time), '%H:%M:%S')
     start_time = now.replace(hour=start_time.time().hour,
                              minute=start_time.time().minute,
                              second=start_time.time().second,
                              microsecond=0)
 
-    end_time = datetime.datetime.strptime(str(period.end_time), "%H:%M:%S")
+    end_time = datetime.datetime.strptime(str(period.end_time), '%H:%M:%S')
     end_time = now.replace(hour=end_time.time().hour,
                            minute=end_time.time().minute,
                            second=end_time.time().second,

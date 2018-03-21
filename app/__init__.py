@@ -27,7 +27,8 @@ def create_app(config_name):
     from app import models
 
     from face_recognition import face_recognition as face_recognition_blueprint
-    app.register_blueprint(face_recognition_blueprint, url_prefix='/api/openface')
+    app.register_blueprint(face_recognition_blueprint,
+                           url_prefix='/api/openface')
 
     from admin import admin as admin_blueprint
     app.register_blueprint(admin_blueprint, url_prefix='/api/admin')
@@ -36,8 +37,8 @@ def create_app(config_name):
     from student import student as student_blueprint
     app.register_blueprint(student_blueprint, url_prefix='/api/student')
 
-    #Route for teacher
+    # Route for teacher
     from teacher import teacher as teacher_blueprint
-    app.register_blueprint(teacher_blueprint,url_prefix='/api/teacher')
+    app.register_blueprint(teacher_blueprint, url_prefix='/api/teacher')
 
     return app

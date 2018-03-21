@@ -55,7 +55,8 @@ def train():
                                           const.openface['FEATURE_DIR'],
                                           const.openface['CLASSIFIER'])
 
-    align_parser = align.Parser(const.openface['RAW_DIR'], const.openface['ALIGNED_DIR'])
+    align_parser = align.Parser(
+        const.openface['RAW_DIR'], const.openface['ALIGNED_DIR'])
 
     # Preprocess the raw images
     align_parser.alignMain()

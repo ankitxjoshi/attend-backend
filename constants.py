@@ -27,7 +27,7 @@ string = {
     'SERVER_ERROR': 'There was some server error',
     'BAD_IMAGE_QUALITY': 'Image is not of appropriate quality',
     'BAD_INPUT': 'Input is invalid',
-    'NO_CLASS' : 'No classes for today'
+    'NO_CLASS': 'No classes for today'
 }
 
 # HTTP_STATUS_CODES
