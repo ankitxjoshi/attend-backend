@@ -26,9 +26,11 @@ jobs:
       - run:
           name: install dependencies
           command: |
+            sudo apt-get install shellcheck
             python3 -m venv venv
             . venv/bin/activate
             pip install -r requirements.txt
+            sudo pip install coala-bears
 
       - save_cache:
           paths:
@@ -40,5 +42,4 @@ jobs:
       # other common Python testing frameworks include pytest and nose
       # https://pytest.org
       # https://nose.readthedocs.io
-      - run: |
-         docker run -ti -v $(pwd):/app --workdir=/app coala/base coala
+      - run: coala

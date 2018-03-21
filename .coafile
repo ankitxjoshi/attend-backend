@@ -32,10 +32,6 @@ max_lines_per_file = 1000
 bears = PythonPackageInitBear
 ignore = *.py
 
-[sql]
-bears = SQLintBear
-files = *.sql
-
 [shell]
 bears = ShellCheckBear
 files = setup.sh 
