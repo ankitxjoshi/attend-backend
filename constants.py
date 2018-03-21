@@ -3,19 +3,20 @@ import os
 __author__ = 'Ankit Joshi'
 
 # OPENFACE CONSTANTS
+project_path = os.path.abspath(os.path.dirname(__file__))
 openface = {
-    'CLASSIFIER_MODEL': os.path.abspath(os.path.dirname(__file__)) + '/data/feature/classifier.pkl',
-    'FEATURE_DIR': os.path.abspath(os.path.dirname(__file__)) + '/data/feature',
-    'RAW_DIR': os.path.abspath(os.path.dirname(__file__)) + '/data/raw',
-    'ALIGNED_DIR': os.path.abspath(os.path.dirname(__file__)) + '/data/align',
-    'TEMP_DIR': os.path.abspath(os.path.dirname(__file__)) + '/data/temp',
+    'CLASSIFIER_MODEL': project_path + '/data/feature/classifier.pkl',
+    'FEATURE_DIR': project_path + '/data/feature',
+    'RAW_DIR': project_path + '/data/raw',
+    'ALIGNED_DIR': project_path + '/data/align',
+    'TEMP_DIR': project_path + '/data/temp',
     'MAIN_LUA_SCRIPT': 'openface/batch-represent/main.lua',
     'CLASSIFIER': 'LinearSvm'
 }
 
 # FLASK CONSTANTS
 flask = {
-    'INSTANCE_DIR': os.path.abspath(os.path.dirname(__file__)) + '/instance'
+    'INSTANCE_DIR': project_path + '/instance'
 }
 
 # STRING_CONSTANTS

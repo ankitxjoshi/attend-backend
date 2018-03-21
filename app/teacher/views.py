@@ -4,7 +4,9 @@ import json
 import datetime
 from . import teacher
 from .. import db
-from ..models import Admin, Student, TimeTable, Period, Classroom, Staff, Attendance, TeacherAttendance
+from ..models import Admin, Student, TimeTable
+from ..models import Period, Classroom, Staff
+from ..models import Attendance, TeacherAttendance
 from ..decorators import auth
 import constants as const
 import itertools
@@ -26,11 +28,15 @@ def get_classes_of_day(staff_id, day):
                             Period.start_time.label('begin_time'),
                             Period.end_time.label('end_time'))
                           .join(Period)
-                          .filter(and_(TimeTable.day == day, TimeTable.staff_id == staff_id))
+                          .filter(and_(TimeTable.day == day,
+                                       TimeTable.staff_id == staff_id))
                           ).all()
 
-    timetable = [dict((name, getattr(x, name)) for name in ['subject', 'classroom', 'section',
-                                                            'year', 'period', 'begin_time', 'end_time']) for x in time_table_details]
+    timetable_list = ['subject', 'classroom', 'section',
+                      'year', 'period', 'begin_time',
+                      'end_time']
+    timetable = [dict((name, getattr(x, name))
+                      for name in timetable_list) for x in time_table_details]
 
     result = dict()
     if not timetable:
@@ -44,14 +50,18 @@ def get_classes_of_day(staff_id, day):
     return json.dumps(result, indent=4, default=str)
 
 
-@teacher.route('/viewAttendance/<string:section>/<string:year>/<string:subject>/<string:staff_id>', methods=['GET'])
+@teacher.route('/viewAttendance/<string:section>/<string:year>' +
+               '/<string:subject>/<string:staff_id>',
+               methods=['GET'])
 def get_attendace(section, subject, year, staff_id):
     year = int(year)
-    total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period'))\
-        .filter(and_(TeacherAttendance.year == year,
-                     and_(TeacherAttendance.subject == subject,
-                          and_(TeacherAttendance.section == section,
-                               TeacherAttendance.staff_id == staff_id))))\
+    total_attendance = db.session.query(
+                       TeacherAttendance.date,
+                       TeacherAttendance.period_id.label('period'))\
+        .filter(TeacherAttendance.year == year,
+                TeacherAttendance.subject == subject,
+                TeacherAttendance.section == section,
+                TeacherAttendance.staff_id == staff_id) \
         .all()
     date_period_list = [(x.date, x.period) for x in total_attendance]
     rollno_details = db.session.query(Student.rollno.label('rollno'))\
@@ -63,12 +73,15 @@ def get_attendace(section, subject, year, staff_id):
 
     for x in date_period_list:
 
-        attendance_for_day = db.session.query(Attendance.rollno)\
-                                       .filter(and_(Attendance.date == x[0],
-                                                    and_(Attendance.period_id == x[1],
-                                                         and_(Attendance.subject == subject,
-                                                              Attendance.rollno.in_(all_rollno_list)))))\
-                                        .all()
+        #  TODO: Refractor code
+        # attendance_for_day = db.session.query(Attendance.rollno)\
+        #                                .filter(
+        #                          Attendance.date == x[0],
+        #                          Attendance.period_id == x[1],
+        #                          Attendance.subject == subject,
+        #                          Attendance.rollno.in_(all_rollno_list)
+        #                                 .all()
+
         rollno_list = [y.rollno for y in attendance_for_day]
 
         temp = dict()
@@ -100,7 +113,11 @@ def get_attendace(section, subject, year, staff_id):
     return json.dumps(result, indent=4, default=str)
 
 
-@teacher.route('/editAttendance/<string:staff_id>/<string:rollno>/<string:subject>/<string:date>/<string:period>/<string:mark_flag>', methods=['PUT'])
+@teacher.route('/ editAttendance/<string: staff_id > /+
+               '<string:rollno>/<string:subject>/' +
+               '<string: date > / < string: period > /+' +
+               '<string:mark_flag>',
+               methods=['PUT'])
 def edit_attendance(staff_id, rollno, subject, date, period, mark_flag):
     # date in dd-mm-yy  check for period in time table
     period = int(period)
@@ -111,14 +128,15 @@ def edit_attendance(staff_id, rollno, subject, date, period, mark_flag):
     student = Student.query.filter_by(rollno=rollno).first()
     section = student.section
     year = student.year
-    print section, year
-    timetable_entry = db.session.query(TimeTable.id)\
-                                .filter(and_(TimeTable.period_id == period,
-                                             and_(TimeTable.year == year,
-                                                  and_(TimeTable.subject == subject,
-                                                       and_(TimeTable.section == section,
-                                                            and_(TimeTable.day == day, TimeTable.staff_id == staff_id))))))\
-                                .first()
+    # TODO: Code needs refractoring
+    # timetable_entry = db.session.query(TimeTable.id)\
+    #                             .filter(TimeTable.period_id == period,
+    #                                     TimeTable.year == year,
+    #                                     TimeTable.subject == subject,
+    #                                     TimeTable.section == section,
+    #                                     TimeTable.day == day,
+    #                                     TimeTable.staff_id == staff_id)
+    #     .first()
 
     if timetable_entry is None:
         result = dict()
@@ -127,31 +145,39 @@ def edit_attendance(staff_id, rollno, subject, date, period, mark_flag):
         return json.dumps(result, indent=4, default=str)
 
     if mark_flag == 'Present':
-        attendance_entry = db.session.query(Attendance.rollno)\
-                                            .filter(and_(Attendance.date == date,
-                                                         and_(Attendance.period_id == period,
-                                                              and_(Attendance.subject == subject,
-                                                                   Attendance.rollno == rollno))))\
-                                           .first()
+        # TODO: Code needs refractoring
+        # attendance_entry = db.session.query(Attendance.rollno)\
+        #                         .filter(Attendance.date == date,
+        #                                 Attendance.period_id == period,
+        #                                 Attendance.subject == subject,
+        #                                 Attendance.rollno == rollno)\
+        #                         .first()
         if attendance_entry is None:
             attendance = Attendance(
                 rollno=rollno, date=date, period_id=period, subject=subject)
             db.session.add(attendance)
             db.session.commit()
     else:
-        attendance_entry = db.session.query(Attendance.rollno)\
-                                        .filter(and_(Attendance.date == date,
-                                                     and_(Attendance.period_id == period,
-                                                          and_(Attendance.subject == subject,
-                                                               Attendance.rollno == rollno))))\
-                                       .delete()
+        pass
+        # TODO: Code needs refractoring
+        # attendance_entry = db.session.query(Attendance.rollno)\
+        #                     .filter(Attendance.date == date,
+        #                             Attendance.period_id == period,
+        #                             Attendance.subject == subject,
+        #                             Attendance.rollno == rollno)\
+        #                     .delete()
     result = dict()
     result['status'] = const.status['OK']
     result['message'] = const.string['SUCCESS']
     return json.dumps(result, indent=4, default=str)
 
+# TODO: Change route
+# @teacher.route('/markSelfAttendance/<string:subject>/' +
+#                '<string:staff_id>/<string:section>/' +
+#                '<string:year>/<string:period>', ]
+#                methods = ['GET'])
 
-@teacher.route('/markSelfAttendance/<string:subject>/<string:staff_id>/<string:section>/<string:year>/<string:period>', methods=['GET'])
+
 def mark_self_attendance(subject, staff_id, section, year, period):
     now = datetime.datetime.now()
     date = now.strftime('%y-%m-%d')
@@ -159,30 +185,36 @@ def mark_self_attendance(subject, staff_id, section, year, period):
     period = int(period)
     day = now.strftime('%A')
     print day
-  # check whether the period exsists or not
-    timetable_entry = db.session.query(TimeTable.id)\
-                                .filter(and_(TimeTable.period_id == period,
-                                             and_(TimeTable.year == year,
-                                                  and_(TimeTable.subject == subject,
-                                                       and_(TimeTable.section == section,
-                                                            and_(TimeTable.day == day, TimeTable.staff_id == staff_id))))))\
-                                .first()
+    # check whether the period exsists or not
+    # TODO: Code needs refractoring
+    # timetable_entry = db.session.query(TimeTable.id)\
+    #     .filter(and_(TimeTable.period_id == period,
+    #                  and_(TimeTable.year == year,
+    #                       and_(TimeTable.subject == subject,
+    #                            and_(TimeTable.section == section,
+    #      and_(TimeTable.day == day, TimeTable.staff_id == staff_id))))))\
+    #    .first()
     if timetable_entry is None:
         result = dict()
         result['status'] = const.status['BAD_REQUEST']
         result['message'] = const.string['BAD_INPUT']
         return json.dumps(result, indent=4, default=str)
-
-    teacher_attendance_entry = db.session.query(TeacherAttendance.id)\
-        .filter(and_(TeacherAttendance.date == date,
-                     and_(TeacherAttendance.period_id == period,
-                          and_(TeacherAttendance.section == section,
-                               and_(TeacherAttendance.year == year,
-                                    and_(TeacherAttendance.subject == subject, TeacherAttendance.staff_id == staff_id))))))\
-        .first()
+    # TODO: Code needs refractoring
+    # teacher_attendance_entry = db.session.query(TeacherAttendance.id)\
+    #     .filter(and_(TeacherAttendance.date == date,
+    #     and_(TeacherAttendance.period_id == period,
+    #         and_(TeacherAttendance.section == section,
+    #         and_(TeacherAttendance.year == year,
+    #     and_(TeacherAttendance.subject == subject,
+    #    TeacherAttendance.staff_id == staff_id))))))\
+    #     .first()
     if teacher_attendance_entry is None:
-        teacher_attendance = TeacherAttendance(staff_id=staff_id, date=date, period_id=period, subject=subject,
-                                               section=section, year=year)
+        teacher_attendance = TeacherAttendance(staff_id=staff_id,
+                                               date=date,
+                                               period_id=period,
+                                               subject=subject,
+                                               section=section,
+                                               year=year)
         db.session.add(teacher_attendance)
         db.session.commit()
     result = dict()
@@ -230,7 +262,6 @@ def login():
         result['status'] = const.status['BAD_REQUEST']
         result['message'] = const.string['MISSING_ARGS']
         return json.dumps(result, indent=4, default=str)
-    print staff_id, passwod
     staff = Staff.query.filter_by(id=staff_id).first()
     if not staff or not staff.verify_password(passwod):
         result = dict()

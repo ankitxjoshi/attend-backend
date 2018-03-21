@@ -39,7 +39,3 @@ files = *.sql
 [shell]
 bears = ShellCheckBear
 files = setup.sh 
-
-[Docker]
-bears = DockerfileLintBear
-files = Dockerfile

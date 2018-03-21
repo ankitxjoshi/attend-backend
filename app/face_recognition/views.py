@@ -1,6 +1,5 @@
 import subprocess
 import uuid
-import os
 
 from flask import jsonify, request
 
@@ -28,14 +27,13 @@ def classify():
     try:
         # Analyze the image
         identity, confidence = classifier_parser.infer()
-    except:
+    except Exception:
         return jsonify(
             data=None,
             status=const.status['INTERNAL_SERVER_ERROR'],
             message=const.string['BAD_IMAGE_QUALITY']
         )
 
-    print identity
     data = dict()
     data['identity'] = identity
     data['confidence'] = str(confidence)

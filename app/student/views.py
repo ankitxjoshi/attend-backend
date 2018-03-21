@@ -8,7 +8,9 @@ import constants as const
 from . import student
 from .. import db
 from ..decorators import auth
-from ..models import Student, TimeTable, Period, Classroom, Staff, Attendance, TeacherAttendance
+from ..models import Student, TimeTable
+from ..models import Period, Classroom
+from ..models import Staff, Attendance, TeacherAttendance
 import itertools
 
 __author__ = 'Shivam Sharma'
@@ -57,11 +59,14 @@ def get_classes_of_day(rollno):
                           .join(Period)
                           .join(Staff)
                           .join(Classroom)
-                          .filter(and_(TimeTable.day == day, TimeTable.section == section, TimeTable.year == year))
+                          .filter(and_(TimeTable.day == day,
+                                       TimeTable.section == section,
+                                       TimeTable.year == year))
                           ).all()
 
-    timetable = [dict((name, getattr(x, name)) for name in ['subject', 'classroom', 'faculty_name',
-                                                            'begin_time', 'end_time', 'period', 'bluetooth_address'])
+    timetable_list = ['subject', 'classroom', 'faculty_name', 'begin_time',
+                      'end_time', 'period', 'bluetooth_address']
+    timetable = [dict((name, getattr(x, name)) for name in timetable_list)
                  for x in
                  time_table_details]
 
@@ -86,9 +91,10 @@ def get_student_details(rollno):
             message=const.string['USER_DOESNT_EXISTS']
         )
 
-    print 'Student details', dir(student)
-    data = dict((name, getattr(student, name)) for name in ['branch', 'email',
-                                                            'name', 'phoneno', 'rollno', 'section', 'year'])
+    data_list = ['branch', 'email', 'name',
+                 'phoneno', 'rollno', 'section',
+                 'year']
+    data = dict((name, getattr(student, name)) for name in data_list)
     print 'data--------------', data
     return jsonify(
         data=data,
@@ -98,7 +104,9 @@ def get_student_details(rollno):
     )
 
 
-@student.route('/attendance_details_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
+@student.route('/attendance_details_for_subject/' +
+               '<string:rollno>/<string:subject>',
+               methods=['GET'])
 def get_attendance_details_for_subject(rollno, subject):
     student = Student.query.filter_by(rollno=rollno).first()
 
@@ -110,18 +118,25 @@ def get_attendance_details_for_subject(rollno, subject):
     section = getattr(student, 'section')
     year = getattr(student, 'year')
 
-    total_present = db.session.query(Attendance.date, Attendance.period_id.label('period')) \
-        .filter(and_(Attendance.rollno == rollno, Attendance.subject == subject)) \
+    total_present = db.session.query(Attendance.date,
+                                     Attendance.period_id.label('period')) \
+        .filter(and_(Attendance.rollno == rollno,
+                     Attendance.subject == subject)) \
         .all()
-    total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period')) \
+    total_attendance = db.session.query(
+                       TeacherAttendance.date,
+                       TeacherAttendance.period_id.label('period')) \
         .filter(and_(TeacherAttendance.year == year,
-                     and_(TeacherAttendance.subject == subject, TeacherAttendance.section == section))) \
+                     and_(TeacherAttendance.subject == subject,
+                          TeacherAttendance.section == section))) \
         .all()
 
-    present_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
-                       total_present]
-    attendance_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
-                          total_attendance]
+    present_details = [dict((name, getattr(x, name))
+                            for name in ['date', 'period'])
+                       for x in total_present]
+    attendance_details = [dict((name, getattr(x, name))
+                               for name in ['date', 'period'])
+                          for x in total_attendance]
     absent_details = list(itertools.ifilterfalse(
         lambda x: x in present_details, attendance_details))
     present_details = list(itertools.ifilter(
@@ -143,7 +158,9 @@ def get_attendance_details_for_subject(rollno, subject):
     return json.dumps(result, indent=4, default=str)
 
 
-@student.route('/attendance_summary_for_subject/<string:rollno>/<string:subject>', methods=['GET'])
+@student.route('/attendance_summary_for_subject/' +
+               '<string:rollno>/<string:subject>',
+               methods=['GET'])
 def get_attendance_summary_for_subject(rollno, subject):
     student = Student.query.filter_by(rollno=rollno).first()
 
@@ -155,18 +172,24 @@ def get_attendance_summary_for_subject(rollno, subject):
 
     section = getattr(student, 'section')
     year = getattr(student, 'year')
-    total_present = db.session.query(Attendance.date, Attendance.period_id.label('period')) \
-        .filter(and_(Attendance.rollno == rollno, Attendance.subject == subject)) \
+    total_present = db.session.query(Attendance.date,
+                                     Attendance.period_id.label('period')) \
+        .filter(Attendance.rollno == rollno, Attendance.subject == subject) \
         .all()
-    total_attendance = db.session.query(TeacherAttendance.date, TeacherAttendance.period_id.label('period')) \
-        .filter(and_(TeacherAttendance.year == year,
-                     and_(TeacherAttendance.subject == subject, TeacherAttendance.section == section))) \
+    total_attendance = db.session.query(
+                       TeacherAttendance.date,
+                       TeacherAttendance.period_id.label('period')) \
+        .filter(TeacherAttendance.year == year,
+                TeacherAttendance.subject == subject,
+                TeacherAttendance.section == section) \
         .all()
 
-    present_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
-                       total_present]
-    attendance_details = [dict((name, getattr(x, name)) for name in ['date', 'period']) for x in
-                          total_attendance]
+    present_details = [dict((name, getattr(x, name))
+                            for name in ['date', 'period'])
+                       for x in total_present]
+    attendance_details = [dict((name, getattr(x, name))
+                               for name in ['date', 'period'])
+                          for x in total_attendance]
     present_details = list(itertools.ifilter(
         lambda x: x in present_details, attendance_details))
 
@@ -184,7 +207,9 @@ def get_attendance_summary_for_subject(rollno, subject):
     return json.dumps(result, indent=4, default=str)
 
 
-@student.route('/cummulative_attendance_summary/<string:rollno>', methods=['GET'])
+@student.route('/cummulative_attendance_summary/' +
+               '<string:rollno>',
+               methods=['GET'])
 def get_cummulative_attendance_summary(rollno):
     student = Student.query.filter_by(rollno=rollno).first()
     if not student:
@@ -194,13 +219,18 @@ def get_cummulative_attendance_summary(rollno):
         )
     section = getattr(student, 'section')
     year = getattr(student, 'year')
-    total_attendance = db.session.query(TeacherAttendance.subject,
-                                        func.count(TeacherAttendance.id).label('total_attendance')) \
-        .filter(and_(TeacherAttendance.section == section, TeacherAttendance.year == year)) \
+    total_attendance = db.session.query(
+                       TeacherAttendance.subject,
+                       func.count(TeacherAttendance.id)
+                       .label('total_attendance')) \
+        .filter(TeacherAttendance.section == section,
+                TeacherAttendance.year == year) \
         .group_by(TeacherAttendance.subject) \
         .all()
 
-    total_present = db.session.query(Attendance.subject, func.count(Attendance.id).label('total_present')) \
+    total_present = db.session.query(
+                    Attendance.subject,
+                    func.count(Attendance.id).label('total_present')) \
         .filter(Attendance.rollno == rollno) \
         .group_by(Attendance.subject) \
         .all()
@@ -230,7 +260,9 @@ def get_cummulative_attendance_summary(rollno):
     return json.dumps(result, indent=4, default=str)
 
 
-@student.route('/mark_attendance/<string:rollno>/<string:subject>/<string:period_id>', methods=['GET'])
+@student.route('/mark_attendance/<string:rollno>/' +
+               '<string:subject>/<string:period_id>',
+               methods=['GET'])
 def mark_attendance(rollno, subject, period_id):
     period = Period.query.filter_by(id=period_id).first()
     now = datetime.datetime.now()

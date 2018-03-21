@@ -22,9 +22,7 @@ def create_app(config_name):
     def health():
         return 'SUCCESS', 200
 
-    migrate = Migrate(app, db)
-
-    from app import models
+    Migrate(app, db)
 
     from face_recognition import face_recognition as face_recognition_blueprint
     app.register_blueprint(face_recognition_blueprint,

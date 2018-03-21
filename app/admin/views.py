@@ -110,7 +110,7 @@ def new_student_entry():
             os.makedirs(new_student_directory)
         with open(image_path, 'wb') as fh:
             fh.write(base64_image.decode('base64'))
-    except:
+    except Exception:
         return jsonify(
             status=const.status['INTERNAL_SERVER_ERROR'],
             message=const.string['SERVER_ERROR']
@@ -130,7 +130,7 @@ def new_student_entry():
 
         db.session.add(student)
         db.session.commit()
-    except:
+    except Exception:
         return jsonify(
             status=const.status['INTERNAL_SERVER_ERROR'],
             message=const.string['BAD_INPUT']
