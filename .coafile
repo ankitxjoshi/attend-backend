@@ -23,14 +23,6 @@ default_actions = PEP8Bear: ApplyPatchAction
 bears = LineLengthBear
 ignore_length_regex = ^.*https?://
  
-[commit]
-bears = GitCommitBear
-shortlog_trailing_period = False
-body_close_issue = True
-body_close_issue_full_url = True
-body_close_issue_on_last_line = True
-body_enforce_issue_reference = False
- 
 [LineCounting]
 enabled = False
 bears = LineCountBear
@@ -39,6 +31,10 @@ max_lines_per_file = 1000
 [PythonPackageInit]
 bears = PythonPackageInitBear
 ignore = *.py
+
+[sql]
+bears = SQLintBear
+files = *.sql
 
 [shell]
 bears = ShellCheckBear

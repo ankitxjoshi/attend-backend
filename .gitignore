@@ -110,3 +110,6 @@ Attend/
 
 # mypy
 .mypy_cache/
+
+#coala files
+*.orig
